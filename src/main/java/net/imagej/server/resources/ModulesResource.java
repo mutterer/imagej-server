@@ -24,10 +24,13 @@ package net.imagej.server.resources;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -50,11 +53,16 @@ import org.scijava.Identifiable;
 import org.scijava.Priority;
 import org.scijava.module.Module;
 import org.scijava.module.ModuleInfo;
+import org.scijava.module.ModuleItem;
 import org.scijava.module.ModuleService;
 import org.scijava.module.process.AbstractPreprocessorPlugin;
+import org.scijava.module.process.ModulePreprocessor;
 import org.scijava.module.process.PreprocessorPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.plugin.PluginInfo;
+import org.scijava.plugin.PluginService;
+import org.scijava.widget.InputHarvester;
 
 /**
  * Server resource that manages module operations.
@@ -68,6 +76,9 @@ public class ModulesResource {
 
 	@Parameter
 	private ModuleService moduleService;
+
+	@Parameter
+	private PluginService pluginService;
 
 	@Inject
 	private JsonService jsonService;
@@ -121,7 +132,58 @@ public class ModulesResource {
 			final String msg = String.format("Module %s does not exist", id);
 			throw new WebApplicationException(msg, Status.NOT_FOUND);
 		}
-		return jsonService.parseObject(info);
+
+		// Create a transient instance of the module, so we can do some
+		// selective preprocessing. This is necessary to determine which
+		// inputs are still unresolved at the time of user input harvesting,
+		// as well as what their current starting values are.
+		final Module module = moduleService.createModule(info);
+
+		// Get the complete list of preprocessors.
+		final List<PluginInfo<PreprocessorPlugin>> allPPs =
+			pluginService.getPluginsOfType(PreprocessorPlugin.class);
+
+		// Filter the list to only those which run _before_ input harvesting.
+		final List<PluginInfo<PreprocessorPlugin>> goodPPs = allPPs.stream() //
+			.filter(ppInfo -> ppInfo.getPriority() > InputHarvester.PRIORITY) //
+			.collect(Collectors.toList());
+
+		// Execute all of these "good" preprocessors to prep the module correctly.
+		for (final ModulePreprocessor p : pluginService.createInstances(goodPPs)) {
+			p.process(module);
+			if (p.isCanceled()) {
+				// TODO - decide what to do if this happens.
+			}
+		}
+
+		for (final ModuleItem<?> input : info.inputs()) {
+			final String name = input.getName();
+
+			// Include resolved status in the JSON feed.
+			// This is handy for judiciously overwriting already-resolved inputs,
+			// particularly the "active image" inputs, which will be reported as
+			// resolved, but not necessarily match what's selected on the client side.
+			final boolean resolved = module.isInputResolved(name);
+			// FIXME
+
+			// Include startingValue in the JSON feed.
+			// Useful for populating the dialog!
+			final Object startingValue = module.getInput(name);
+			// FIXME
+		}
+
+		// START HERE - figure out whether to populate some new "WebModuleInfo"
+		// or similar object with the above, or whether this can be integrated
+		// into the ModuleInfo mix-in. Need to learn more about Jackson.
+		return jsonService.parseObject(new WebModuleInfo(info));
+	}
+	public static class WebModuleInfo implements Serializable {
+
+		private final String foo = "Foo";
+		private final String bar = "Bar";
+		public WebModuleInfo(ModuleInfo info) {
+			// TODO
+		}
 	}
 
 	/**
