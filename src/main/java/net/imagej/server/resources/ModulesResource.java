@@ -51,7 +51,6 @@ import net.imagej.server.services.JsonService;
 import org.scijava.Context;
 import org.scijava.Identifiable;
 import org.scijava.Priority;
-import org.scijava.command.CommandModule;
 import org.scijava.command.CommandInfo;
 import org.scijava.module.Module;
 import org.scijava.module.ModuleInfo;
@@ -135,9 +134,9 @@ public class ModulesResource {
 		}
 
 		// Check if we're dealing with Command information
-		if (!info.getClass().equals(CommandInfo.class)) {
+		if (!(info instanceof CommandInfo)) {
 			// TODO - decide what to do if this happens.
-			return null;
+			throw new IllegalArgumentException("Object is not an instance of " + CommandInfo.class.getName());
 		}
 		
 		// Create a transient instance of the module, so we can do some
@@ -146,12 +145,6 @@ public class ModulesResource {
 		// as well as what their current starting values are.
 		final Module module = moduleService.createModule(info);
 		
-		// Check if we're dealing with a Command module
-		if (!module.getClass().equals(CommandModule.class)) {
-			// TODO - decide what to do if this happens.
-			return null;
-		}
-
 		// Get the complete list of preprocessors.
 		final List<PluginInfo<PreprocessorPlugin>> allPPs =
 			pluginService.getPluginsOfType(PreprocessorPlugin.class);
@@ -170,7 +163,7 @@ public class ModulesResource {
 		}
 		
 		// Create a WebCommandInfo instance and parse it (resolved inputs will be identified during the process)
-		return jsonService.parseObject(new WebCommandInfo((CommandInfo)info, (CommandModule)module));
+		return jsonService.parseObject(new WebCommandInfo((CommandInfo)info, module));
 	}
 	
 	/**
