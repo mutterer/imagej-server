@@ -22,7 +22,7 @@ public class WebCommandInfo extends CommandInfo {
 		
 		final List<WebCommandModuleItem<?>> checkedInputs = new ArrayList<>();
 		for (final ModuleItem<?> input : super.inputs()) {
-			if (input.getClass().equals(CommandModuleItem.class)) {
+			if (input instanceof CommandModuleItem) {
 				WebCommandModuleItem<?> webCommandModuleItem = new WebCommandModuleItem<>(this, (CommandModuleItem<?>)input);
 				final String name = input.getName();
 
