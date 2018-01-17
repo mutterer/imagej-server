@@ -5,19 +5,17 @@ import java.util.Collections;
 import java.util.List;
 
 import org.scijava.command.CommandInfo;
-import org.scijava.command.CommandModule;
 import org.scijava.command.CommandModuleItem;
+import org.scijava.module.Module;
 import org.scijava.module.ModuleItem;
-
-import net.imagej.server.WebCommandModuleItem;
 
 public class WebCommandInfo extends CommandInfo {
 	
-	private final CommandModule relatedCommandModule;
+	private final Module relatedModule;
 	
-	public WebCommandInfo(CommandInfo commandInfo, CommandModule commandModule) {
+	public WebCommandInfo(CommandInfo commandInfo, Module module) {
 		super(commandInfo);
-		relatedCommandModule = commandModule;
+		relatedModule = module;
 	}
 	
 	public Iterable<ModuleItem<?>> inputs() {
@@ -32,11 +30,11 @@ public class WebCommandInfo extends CommandInfo {
 				// This is handy for judiciously overwriting already-resolved inputs,
 				// particularly the "active image" inputs, which will be reported as
 				// resolved, but not necessarily match what's selected on the client side.
-				webCommandModuleItem.isResolved = relatedCommandModule.isInputResolved(name);
+				webCommandModuleItem.isResolved = relatedModule.isInputResolved(name);
 
 				// Include startingValue in the JSON feed.
 				// Useful for populating the dialog!
-				webCommandModuleItem.startingValue = relatedCommandModule.getInput(name);
+				webCommandModuleItem.startingValue = relatedModule.getInput(name);
 				
 				checkedInputs.add(webCommandModuleItem);					
 			}
