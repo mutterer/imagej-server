@@ -1,6 +1,6 @@
 
 ## Install Raspbian
-Installed Raspbian using 2018-03-13-raspbian-stretch.img
+Install Raspbian using 2018-03-13-raspbian-stretch.img
 with instructions from https://www.raspberrypi.org/downloads/raspbian/
 
 ## Updata Java
@@ -65,7 +65,8 @@ Some tests are failing but the server starts and seems to works.
 ## Trying the Python wrapper.
 
 * Install from Pypi (https://pypi.python.org/pypi/imagej) using:
-```pip install imagej
+```
+pip install imagej
 ```
 This, however does not come with the example program "usage.py". 
 
