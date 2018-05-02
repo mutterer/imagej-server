@@ -1,5 +1,5 @@
 
-## Instal Raspbian
+## Install Raspbian
 Installed Raspbian using 2018-03-13-raspbian-stretch.img
 with instructions from https://www.raspberrypi.org/downloads/raspbian/
 
