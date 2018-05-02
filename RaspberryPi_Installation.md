@@ -3,7 +3,7 @@
 Install Raspbian using 2018-03-13-raspbian-stretch.img
 with instructions from https://www.raspberrypi.org/downloads/raspbian/
 
-## Updata Java
+## Update Java
 The default version of java is not enough to build imagej-server using maven, so you need to upgrade first.
 
 * From Oracle website, download latest JDK
